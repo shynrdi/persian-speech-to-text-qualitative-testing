@@ -1,0 +1,16 @@
+Realtime recommendation (heuristic):
+- prioritize mean_rtf (lower better), then mean_CER
+
+device: cpu
+backend: transformers_whisper
+model_id: openai/whisper-tiny
+precision: fp32
+mean_rtf: 0.1913411149977196
+mean_infer_sec: 1.0136852104009852
+mean_CER: 0.5095652223303291
+mean_WER: 0.9858690607355748
+n: 36
+
+Rule of thumb:
+- If you need RTF < 0.2: consider faster-whisper on GPU (float16 or int8_float16).
+- If CPU-only: faster-whisper int8 is usually your best speed baseline.

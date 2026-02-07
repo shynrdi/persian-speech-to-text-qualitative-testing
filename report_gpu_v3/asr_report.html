@@ -1,0 +1,972 @@
+
+    <html><head>
+      <meta charset="utf-8"/>
+      <title>Persian ASR Benchmark Report</title>
+      <style>
+        body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 24px; }
+        h1,h2,h3 { margin-top: 28px; }
+        table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; font-size: 13px; vertical-align: top; }
+        th { background: #f7f7f7; position: sticky; top: 0; }
+        .analysis { white-space: pre-wrap; background: #f8fafc; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; }
+        .note { color: #444; }
+        code { background: #f2f2f2; padding: 1px 4px; border-radius: 6px; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        @media (min-width: 1100px) { .grid { grid-template-columns: 1fr 1fr; } }
+      </style>
+    </head><body>
+    <h1>Persian ASR Benchmark Report</h1>
+<p class='note'>Scoring: lower CER/WER is better. Speed: lower infer/RTF is better. Warmup excluded.</p>
+<h2>Analysis</h2>
+<div class='analysis'>ENV
+----------------------------------------
+torch: 2.10.0+cu128
+torch_cuda_build: 12.8
+cuda_available_system: True
+requested_device: gpu
+run_device_used: cuda
+fw_device_used: cuda
+gpu_name: NVIDIA RTX A6000
+capability: (8, 6)
+
+Notes:
+- mean_infer_sec excludes warmup and excludes model load_time.
+- mean_latency_sec includes (amortized) load_sec + infer_sec (mostly for completeness).
+- For Persian, CER is usually more stable than WER.
+
+TOP-5 (FAIR): sort by mean_CER then mean_infer_sec
+device              backend                model_id    precision  mean_CER  mean_WER  mean_infer_sec  mean_rtf  success_rate  n
+   gpu       faster_whisper openai/whisper-large-v3      float16  0.134450  0.379677        0.484114  0.093458           1.0 36
+   gpu       faster_whisper openai/whisper-large-v3 int8_float16  0.139279  0.382468        0.522223  0.100498           1.0 36
+   gpu transformers_whisper openai/whisper-large-v3         fp16  0.142426  0.393523        1.429497  0.271404           1.0 36
+   gpu transformers_whisper   openai/whisper-medium         fp16  0.185758  0.474223        1.072882  0.203676           1.0 36
+   gpu       faster_whisper   openai/whisper-medium int8_float16  0.189065  0.509725        0.410325  0.078599           1.0 36
+
+TOP-5 (REALTIME): sort by mean_rtf then mean_CER
+device        backend              model_id    precision  mean_CER  mean_WER  mean_infer_sec  mean_rtf  success_rate  n
+   gpu faster_whisper  openai/whisper-small      float16  0.314695  0.758947        0.217666  0.042354           1.0 36
+   gpu faster_whisper   openai/whisper-base      float16  0.462866  0.932744        0.249690  0.049358           1.0 36
+   gpu faster_whisper  openai/whisper-small int8_float16  0.296388  0.744762        0.258666  0.050266           1.0 36
+   gpu faster_whisper   openai/whisper-base int8_float16  0.464396  0.931429        0.319494  0.059110           1.0 36
+   gpu faster_whisper openai/whisper-medium      float16  0.189755  0.501523        0.362176  0.070696           1.0 36
+
+Pareto (FAIR: CER vs infer_sec)
+device        backend                model_id    precision  mean_CER  mean_WER  mean_infer_sec  mean_rtf  success_rate  n
+   gpu faster_whisper openai/whisper-large-v3      float16  0.134450  0.379677        0.484114  0.093458           1.0 36
+   gpu faster_whisper   openai/whisper-medium int8_float16  0.189065  0.509725        0.410325  0.078599           1.0 36
+   gpu faster_whisper   openai/whisper-medium      float16  0.189755  0.501523        0.362176  0.070696           1.0 36
+   gpu faster_whisper    openai/whisper-small int8_float16  0.296388  0.744762        0.258666  0.050266           1.0 36
+   gpu faster_whisper    openai/whisper-small      float16  0.314695  0.758947        0.217666  0.042354           1.0 36
+
+Pareto (REALTIME: CER vs RTF)
+device        backend                model_id    precision  mean_CER  mean_WER  mean_infer_sec  mean_rtf  success_rate  n
+   gpu faster_whisper openai/whisper-large-v3      float16  0.134450  0.379677        0.484114  0.093458           1.0 36
+   gpu faster_whisper   openai/whisper-medium int8_float16  0.189065  0.509725        0.410325  0.078599           1.0 36
+   gpu faster_whisper   openai/whisper-medium      float16  0.189755  0.501523        0.362176  0.070696           1.0 36
+   gpu faster_whisper    openai/whisper-small int8_float16  0.296388  0.744762        0.258666  0.050266           1.0 36
+   gpu faster_whisper    openai/whisper-small      float16  0.314695  0.758947        0.217666  0.042354           1.0 36</div>
+<h2>Pareto charts</h2>
+<div class='grid'>
+    <div style="margin:12px 0">
+      <div style="font-weight:600;margin:6px 0">Pareto (FAIR): mean_CER vs mean_infer_sec (lower is better)</div>
+      <svg width="640" height="360" viewBox="0 0 640 360" style="border:1px solid #e5e7eb;border-radius:12px;background:#fff">
+        <line x1='40.00' y1='40' x2='40.00' y2='320' stroke='#ddd' stroke-width='1'/><text x='40.00' y='350' font-size='10' text-anchor='middle'>0.12</text><line x1='180.00' y1='40' x2='180.00' y2='320' stroke='#ddd' stroke-width='1'/><text x='180.00' y='350' font-size='10' text-anchor='middle'>0.172</text><line x1='320.00' y1='40' x2='320.00' y2='320' stroke='#ddd' stroke-width='1'/><text x='320.00' y='350' font-size='10' text-anchor='middle'>0.225</text><line x1='460.00' y1='40' x2='460.00' y2='320' stroke='#ddd' stroke-width='1'/><text x='460.00' y='350' font-size='10' text-anchor='middle'>0.277</text><line x1='600.00' y1='40' x2='600.00' y2='320' stroke='#ddd' stroke-width='1'/><text x='600.00' y='350' font-size='10' text-anchor='middle'>0.329</text><line x1='40' y1='320.00' x2='600' y2='320.00' stroke='#ddd' stroke-width='1'/><text x='10' y='324.00' font-size='10'>0.196</text><line x1='40' y1='250.00' x2='600' y2='250.00' stroke='#ddd' stroke-width='1'/><text x='10' y='254.00' font-size='10'>0.274</text><line x1='40' y1='180.00' x2='600' y2='180.00' stroke='#ddd' stroke-width='1'/><text x='10' y='184.00' font-size='10'>0.351</text><line x1='40' y1='110.00' x2='600' y2='110.00' stroke='#ddd' stroke-width='1'/><text x='10' y='114.00' font-size='10'>0.428</text><line x1='40' y1='40.00' x2='600' y2='40.00' stroke='#ddd' stroke-width='1'/><text x='10' y='44.00' font-size='10'>0.505</text>
+        <rect x="40" y="40" width="560" height="280" fill="none" stroke="#999" stroke-width="1"/>
+        <circle cx='78.62' cy='59.31' r='4' opacity='0.75'></circle><circle cx='226.75' cy='169.78' r='4' opacity='0.75'></circle><circle cx='224.90' cy='126.16' r='4' opacity='0.75'></circle><circle cx='561.38' cy='300.69' r='4' opacity='0.75'></circle><circle cx='512.35' cy='263.55' r='4' opacity='0.75'></circle>
+        <text x='84.62' y='53.31' font-size='10'>faster_whisper | openai/whisper-large-v3 | float…</text><text x='232.75' y='163.78' font-size='10'>faster_whisper | openai/whisper-medium | float16</text><text x='230.90' y='120.16' font-size='10'>faster_whisper | openai/whisper-medium | int8_fl…</text><text x='567.38' y='294.69' font-size='10'>faster_whisper | openai/whisper-small | float16</text><text x='518.35' y='257.55' font-size='10'>faster_whisper | openai/whisper-small | int8_flo…</text>
+      </svg>
+      <div style="font-size:12px;color:#444;margin-top:6px">
+        x: <code>mean_CER</code> , y: <code>mean_infer_sec</code>
+      </div>
+    </div>
+    
+    <div style="margin:12px 0">
+      <div style="font-weight:600;margin:6px 0">Pareto (REALTIME): mean_CER vs mean_rtf (lower is better)</div>
+      <svg width="640" height="360" viewBox="0 0 640 360" style="border:1px solid #e5e7eb;border-radius:12px;background:#fff">
+        <line x1='40.00' y1='40' x2='40.00' y2='320' stroke='#ddd' stroke-width='1'/><text x='40.00' y='350' font-size='10' text-anchor='middle'>0.12</text><line x1='180.00' y1='40' x2='180.00' y2='320' stroke='#ddd' stroke-width='1'/><text x='180.00' y='350' font-size='10' text-anchor='middle'>0.172</text><line x1='320.00' y1='40' x2='320.00' y2='320' stroke='#ddd' stroke-width='1'/><text x='320.00' y='350' font-size='10' text-anchor='middle'>0.225</text><line x1='460.00' y1='40' x2='460.00' y2='320' stroke='#ddd' stroke-width='1'/><text x='460.00' y='350' font-size='10' text-anchor='middle'>0.277</text><line x1='600.00' y1='40' x2='600.00' y2='320' stroke='#ddd' stroke-width='1'/><text x='600.00' y='350' font-size='10' text-anchor='middle'>0.329</text><line x1='40' y1='320.00' x2='600' y2='320.00' stroke='#ddd' stroke-width='1'/><text x='10' y='324.00' font-size='10'>0.0383</text><line x1='40' y1='250.00' x2='600' y2='250.00' stroke='#ddd' stroke-width='1'/><text x='10' y='254.00' font-size='10'>0.0531</text><line x1='40' y1='180.00' x2='600' y2='180.00' stroke='#ddd' stroke-width='1'/><text x='10' y='184.00' font-size='10'>0.0679</text><line x1='40' y1='110.00' x2='600' y2='110.00' stroke='#ddd' stroke-width='1'/><text x='10' y='114.00' font-size='10'>0.0827</text><line x1='40' y1='40.00' x2='600' y2='40.00' stroke='#ddd' stroke-width='1'/><text x='10' y='44.00' font-size='10'>0.0975</text>
+        <rect x="40" y="40" width="560" height="280" fill="none" stroke="#999" stroke-width="1"/>
+        <circle cx='78.62' cy='59.31' r='4' opacity='0.75'></circle><circle cx='226.75' cy='166.82' r='4' opacity='0.75'></circle><circle cx='224.90' cy='129.49' r='4' opacity='0.75'></circle><circle cx='561.38' cy='300.69' r='4' opacity='0.75'></circle><circle cx='512.35' cy='263.32' r='4' opacity='0.75'></circle>
+        <text x='84.62' y='53.31' font-size='10'>faster_whisper | openai/whisper-large-v3 | float…</text><text x='232.75' y='160.82' font-size='10'>faster_whisper | openai/whisper-medium | float16</text><text x='230.90' y='123.49' font-size='10'>faster_whisper | openai/whisper-medium | int8_fl…</text><text x='567.38' y='294.69' font-size='10'>faster_whisper | openai/whisper-small | float16</text><text x='518.35' y='257.32' font-size='10'>faster_whisper | openai/whisper-small | int8_flo…</text>
+      </svg>
+      <div style="font-size:12px;color:#444;margin-top:6px">
+        x: <code>mean_CER</code> , y: <code>mean_rtf</code>
+      </div>
+    </div>
+    </div>
+<h2>Overall summary (all variants)</h2>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>device</th>
+      <th>backend</th>
+      <th>model_id</th>
+      <th>precision</th>
+      <th>n</th>
+      <th>success_rate</th>
+      <th>mean_load_sec</th>
+      <th>mean_infer_sec</th>
+      <th>p50_infer_sec</th>
+      <th>mean_latency_sec</th>
+      <th>mean_rtf</th>
+      <th>p50_rtf</th>
+      <th>mean_WER</th>
+      <th>mean_CER</th>
+      <th>rank_score_fair</th>
+      <th>rank_score_realtime</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.018866</td>
+      <td>0.249690</td>
+      <td>0.139284</td>
+      <td>0.268555</td>
+      <td>0.049358</td>
+      <td>0.030137</td>
+      <td>0.932744</td>
+      <td>0.462866</td>
+      <td>463.115905</td>
+      <td>49.820937</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>int8_float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.034762</td>
+      <td>0.319494</td>
+      <td>0.150505</td>
+      <td>0.354255</td>
+      <td>0.059110</td>
+      <td>0.032891</td>
+      <td>0.931429</td>
+      <td>0.464396</td>
+      <td>464.715085</td>
+      <td>59.574383</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-large-v3</td>
+      <td>float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.107531</td>
+      <td>0.484114</td>
+      <td>0.459273</td>
+      <td>0.591645</td>
+      <td>0.093458</td>
+      <td>0.093202</td>
+      <td>0.379677</td>
+      <td>0.134450</td>
+      <td>134.933819</td>
+      <td>93.592092</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-large-v3</td>
+      <td>int8_float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.913536</td>
+      <td>0.522223</td>
+      <td>0.487831</td>
+      <td>1.435760</td>
+      <td>0.100498</td>
+      <td>0.097695</td>
+      <td>0.382468</td>
+      <td>0.139279</td>
+      <td>139.801241</td>
+      <td>100.637249</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-medium</td>
+      <td>float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.057760</td>
+      <td>0.362176</td>
+      <td>0.343063</td>
+      <td>0.419936</td>
+      <td>0.070696</td>
+      <td>0.069817</td>
+      <td>0.501523</td>
+      <td>0.189755</td>
+      <td>190.117632</td>
+      <td>70.885417</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-medium</td>
+      <td>int8_float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.226869</td>
+      <td>0.410325</td>
+      <td>0.380544</td>
+      <td>0.637194</td>
+      <td>0.078599</td>
+      <td>0.077958</td>
+      <td>0.509725</td>
+      <td>0.189065</td>
+      <td>189.475293</td>
+      <td>78.788489</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-small</td>
+      <td>float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.097911</td>
+      <td>0.217666</td>
+      <td>0.203993</td>
+      <td>0.315577</td>
+      <td>0.042354</td>
+      <td>0.042124</td>
+      <td>0.758947</td>
+      <td>0.314695</td>
+      <td>314.912401</td>
+      <td>42.668654</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-small</td>
+      <td>int8_float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.048090</td>
+      <td>0.258666</td>
+      <td>0.239141</td>
+      <td>0.306757</td>
+      <td>0.050266</td>
+      <td>0.050783</td>
+      <td>0.744762</td>
+      <td>0.296388</td>
+      <td>296.646951</td>
+      <td>50.561900</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.029187</td>
+      <td>0.835931</td>
+      <td>0.789640</td>
+      <td>0.865118</td>
+      <td>0.155513</td>
+      <td>0.152296</td>
+      <td>1.016750</td>
+      <td>0.544559</td>
+      <td>545.394869</td>
+      <td>156.057360</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>fp16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.168021</td>
+      <td>0.392527</td>
+      <td>0.352131</td>
+      <td>0.560549</td>
+      <td>0.074552</td>
+      <td>0.073715</td>
+      <td>0.948353</td>
+      <td>0.470075</td>
+      <td>470.467614</td>
+      <td>75.022296</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-large-v3</td>
+      <td>fp16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.452751</td>
+      <td>1.429497</td>
+      <td>1.305199</td>
+      <td>1.882249</td>
+      <td>0.271404</td>
+      <td>0.270192</td>
+      <td>0.393523</td>
+      <td>0.142426</td>
+      <td>143.855929</td>
+      <td>271.546426</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-medium</td>
+      <td>fp16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.343814</td>
+      <td>1.072882</td>
+      <td>0.974589</td>
+      <td>1.416697</td>
+      <td>0.203676</td>
+      <td>0.193463</td>
+      <td>0.474223</td>
+      <td>0.185758</td>
+      <td>186.831303</td>
+      <td>203.861430</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-small</td>
+      <td>fp16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.838280</td>
+      <td>0.618971</td>
+      <td>0.565677</td>
+      <td>1.457251</td>
+      <td>0.117910</td>
+      <td>0.120248</td>
+      <td>0.718652</td>
+      <td>0.295852</td>
+      <td>296.471183</td>
+      <td>118.205748</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>fp16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.293704</td>
+      <td>0.372056</td>
+      <td>0.323549</td>
+      <td>0.665760</td>
+      <td>0.070878</td>
+      <td>0.070098</td>
+      <td>0.985869</td>
+      <td>0.508303</td>
+      <td>508.674652</td>
+      <td>71.386659</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Pareto frontier tables</h2>
+<h3>FAIR (CER vs infer_sec)</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>device</th>
+      <th>backend</th>
+      <th>model_id</th>
+      <th>precision</th>
+      <th>n</th>
+      <th>success_rate</th>
+      <th>mean_load_sec</th>
+      <th>mean_infer_sec</th>
+      <th>p50_infer_sec</th>
+      <th>mean_latency_sec</th>
+      <th>mean_rtf</th>
+      <th>p50_rtf</th>
+      <th>mean_WER</th>
+      <th>mean_CER</th>
+      <th>rank_score_fair</th>
+      <th>rank_score_realtime</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-large-v3</td>
+      <td>float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.107531</td>
+      <td>0.484114</td>
+      <td>0.459273</td>
+      <td>0.591645</td>
+      <td>0.093458</td>
+      <td>0.093202</td>
+      <td>0.379677</td>
+      <td>0.134450</td>
+      <td>134.933819</td>
+      <td>93.592092</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-medium</td>
+      <td>float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.057760</td>
+      <td>0.362176</td>
+      <td>0.343063</td>
+      <td>0.419936</td>
+      <td>0.070696</td>
+      <td>0.069817</td>
+      <td>0.501523</td>
+      <td>0.189755</td>
+      <td>190.117632</td>
+      <td>70.885417</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-medium</td>
+      <td>int8_float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.226869</td>
+      <td>0.410325</td>
+      <td>0.380544</td>
+      <td>0.637194</td>
+      <td>0.078599</td>
+      <td>0.077958</td>
+      <td>0.509725</td>
+      <td>0.189065</td>
+      <td>189.475293</td>
+      <td>78.788489</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-small</td>
+      <td>float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.097911</td>
+      <td>0.217666</td>
+      <td>0.203993</td>
+      <td>0.315577</td>
+      <td>0.042354</td>
+      <td>0.042124</td>
+      <td>0.758947</td>
+      <td>0.314695</td>
+      <td>314.912401</td>
+      <td>42.668654</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-small</td>
+      <td>int8_float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.048090</td>
+      <td>0.258666</td>
+      <td>0.239141</td>
+      <td>0.306757</td>
+      <td>0.050266</td>
+      <td>0.050783</td>
+      <td>0.744762</td>
+      <td>0.296388</td>
+      <td>296.646951</td>
+      <td>50.561900</td>
+    </tr>
+  </tbody>
+</table>
+<h3>REALTIME (CER vs rtf)</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>device</th>
+      <th>backend</th>
+      <th>model_id</th>
+      <th>precision</th>
+      <th>n</th>
+      <th>success_rate</th>
+      <th>mean_load_sec</th>
+      <th>mean_infer_sec</th>
+      <th>p50_infer_sec</th>
+      <th>mean_latency_sec</th>
+      <th>mean_rtf</th>
+      <th>p50_rtf</th>
+      <th>mean_WER</th>
+      <th>mean_CER</th>
+      <th>rank_score_fair</th>
+      <th>rank_score_realtime</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-large-v3</td>
+      <td>float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.107531</td>
+      <td>0.484114</td>
+      <td>0.459273</td>
+      <td>0.591645</td>
+      <td>0.093458</td>
+      <td>0.093202</td>
+      <td>0.379677</td>
+      <td>0.134450</td>
+      <td>134.933819</td>
+      <td>93.592092</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-medium</td>
+      <td>float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.057760</td>
+      <td>0.362176</td>
+      <td>0.343063</td>
+      <td>0.419936</td>
+      <td>0.070696</td>
+      <td>0.069817</td>
+      <td>0.501523</td>
+      <td>0.189755</td>
+      <td>190.117632</td>
+      <td>70.885417</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-medium</td>
+      <td>int8_float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.226869</td>
+      <td>0.410325</td>
+      <td>0.380544</td>
+      <td>0.637194</td>
+      <td>0.078599</td>
+      <td>0.077958</td>
+      <td>0.509725</td>
+      <td>0.189065</td>
+      <td>189.475293</td>
+      <td>78.788489</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-small</td>
+      <td>float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.097911</td>
+      <td>0.217666</td>
+      <td>0.203993</td>
+      <td>0.315577</td>
+      <td>0.042354</td>
+      <td>0.042124</td>
+      <td>0.758947</td>
+      <td>0.314695</td>
+      <td>314.912401</td>
+      <td>42.668654</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-small</td>
+      <td>int8_float16</td>
+      <td>36</td>
+      <td>1.0</td>
+      <td>0.048090</td>
+      <td>0.258666</td>
+      <td>0.239141</td>
+      <td>0.306757</td>
+      <td>0.050266</td>
+      <td>0.050783</td>
+      <td>0.744762</td>
+      <td>0.296388</td>
+      <td>296.646951</td>
+      <td>50.561900</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Hardest samples (top 25 CER)</h2>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>device</th>
+      <th>backend</th>
+      <th>model_id</th>
+      <th>precision</th>
+      <th>speaker</th>
+      <th>audio_id</th>
+      <th>infer_sec</th>
+      <th>rtf</th>
+      <th>WER</th>
+      <th>CER</th>
+      <th>ref_text</th>
+      <th>pred_text</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>float16</td>
+      <td>Shayan</td>
+      <td>Shayan05</td>
+      <td>0.211896</td>
+      <td>0.056596</td>
+      <td>1.250000</td>
+      <td>0.921569</td>
+      <td>الان دقیقاً نمی‌دونم چی می‌خوام بگم ولی ادامه می‌دم!</td>
+      <td>آلان داری غنمی دنانشیمی خوم بیبالی دنمی دنمی دنمی دنمی دنمی دنمی دنمی دنمی دنمی</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>fp16</td>
+      <td>Shayan</td>
+      <td>Shayan08</td>
+      <td>0.522957</td>
+      <td>0.085787</td>
+      <td>1.285714</td>
+      <td>0.852459</td>
+      <td>من بین سال‌های ۱۳۹۸ تا ۱۴۰۲ روی پروژه‌های هوش مصنوعی کار کردم.</td>
+      <td>مبینی سالله از ارسی ستنا و تهاش ده هزار چار سلدر ریب پورا جاه کشه مستنی کار چیار دا</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>float16</td>
+      <td>Ardalan</td>
+      <td>Ardalan08</td>
+      <td>1.138114</td>
+      <td>0.159132</td>
+      <td>1.285714</td>
+      <td>0.852459</td>
+      <td>من بین سال‌های ۱۳۹۸ تا ۱۴۰۲ روی پروژه‌های هوش مصنوعی کار کردم.</td>
+      <td>من بین سو دوی ازرست نو اگر هایش تو ازرش هرست دو بی پورج ایوشی بایسی کاری کاری کاری دا</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>int8_float16</td>
+      <td>Shayan</td>
+      <td>Shayan08</td>
+      <td>0.182199</td>
+      <td>0.029888</td>
+      <td>1.500000</td>
+      <td>0.836066</td>
+      <td>من بین سال‌های ۱۳۹۸ تا ۱۴۰۲ روی پروژه‌های هوش مصنوعی کار کردم.</td>
+      <td>من بینی سالی حضور سی سر نا و تو هش ده زر چار سالی دوری پر جو حکو جی مستمی کارکیر دا</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>float16</td>
+      <td>Ardalan</td>
+      <td>Ardalan05</td>
+      <td>0.590127</td>
+      <td>0.119362</td>
+      <td>1.000000</td>
+      <td>0.784314</td>
+      <td>الان دقیقاً نمی‌دونم چی می‌خوام بگم ولی ادامه می‌دم!</td>
+      <td>ارندیتا ارندیتا ارندیتا ارندی مدرم چیمی خمبی یعن برهدامیدام</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>float16</td>
+      <td>Shayan</td>
+      <td>Shayan13</td>
+      <td>1.899062</td>
+      <td>0.263759</td>
+      <td>1.000000</td>
+      <td>0.783505</td>
+      <td>من می‌خواستم سریع توضیح بدم ولی چون هیجان‌زده بودم کلمات قاطی شد و جمله طولانی‌تر از حد انتظار شد.</td>
+      <td>bunch يجهن حیمد برو سرای دون شخصویت ب hopedید که آیا� ساری تسوائیج دهتيشاته ب Cow</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>fp16</td>
+      <td>Shayan</td>
+      <td>Shayan08</td>
+      <td>0.506219</td>
+      <td>0.083041</td>
+      <td>1.428571</td>
+      <td>0.770492</td>
+      <td>من بین سال‌های ۱۳۹۸ تا ۱۴۰۲ روی پروژه‌های هوش مصنوعی کار کردم.</td>
+      <td>من بینی سالی حضور سی سر نا و تو هش ده زر چار سدوری پر جو حکو جی مستمی کار کیار دا</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>float16</td>
+      <td>Shayan</td>
+      <td>Shayan08</td>
+      <td>0.211559</td>
+      <td>0.034705</td>
+      <td>1.428571</td>
+      <td>0.770492</td>
+      <td>من بین سال‌های ۱۳۹۸ تا ۱۴۰۲ روی پروژه‌های هوش مصنوعی کار کردم.</td>
+      <td>من بینی سالی حضور سی سر نا و تو هش ده زر چار سدوری پر جو حکو جی مستمی کارکیر دا</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>float16</td>
+      <td>Ardalan</td>
+      <td>Ardalan08</td>
+      <td>0.166480</td>
+      <td>0.023277</td>
+      <td>1.142857</td>
+      <td>0.770492</td>
+      <td>من بین سال‌های ۱۳۹۸ تا ۱۴۰۲ روی پروژه‌های هوش مصنوعی کار کردم.</td>
+      <td>من بین ساده از ارسد نواته هش تو از ارش ارسده دو بی پورجه اوشه ارسلی کالکیر دا</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>fp16</td>
+      <td>Shayan</td>
+      <td>Shayan12</td>
+      <td>0.276581</td>
+      <td>0.081156</td>
+      <td>1.000000</td>
+      <td>0.750000</td>
+      <td>سرِ سبد سیب سرخ سنگین شد.</td>
+      <td>سارسا بادی سیبسو اخساً جنشوط</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>int8_float16</td>
+      <td>Ardalan</td>
+      <td>Ardalan08</td>
+      <td>1.633903</td>
+      <td>0.228454</td>
+      <td>1.071429</td>
+      <td>0.737705</td>
+      <td>من بین سال‌های ۱۳۹۸ تا ۱۴۰۲ روی پروژه‌های هوش مصنوعی کار کردم.</td>
+      <td>من بین ساده از ارسد نواده هش تو از ارشر سادتو بیپورجه اوشه از بی کارکیر دن</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>fp16</td>
+      <td>Ardalan</td>
+      <td>Ardalan08</td>
+      <td>0.499319</td>
+      <td>0.069815</td>
+      <td>1.214286</td>
+      <td>0.721311</td>
+      <td>من بین سال‌های ۱۳۹۸ تا ۱۴۰۲ روی پروژه‌های هوش مصنوعی کار کردم.</td>
+      <td>من بین ساده از ارسد نواته هش تو از آر شرصه دو بی پورجه اوشه اصلای کال خیر دا</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>float16</td>
+      <td>Ardalan</td>
+      <td>Ardalan10</td>
+      <td>1.915481</td>
+      <td>0.308153</td>
+      <td>1.000000</td>
+      <td>0.708333</td>
+      <td>شیر، شیلنگ، شیشه و شیراز خیلی شبیه هم شروع می‌شن.</td>
+      <td>طرک شیر حل如果你 شیروا خلیش</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>float16</td>
+      <td>Ardalan</td>
+      <td>Ardalan11</td>
+      <td>0.127076</td>
+      <td>0.032090</td>
+      <td>1.000000</td>
+      <td>0.700000</td>
+      <td>ساقه‌ی درخت کنار سکو شکسته بود.</td>
+      <td>سالی دیر اخطقی نرسته کشه که سیوط</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>fp16</td>
+      <td>Ardalan</td>
+      <td>Ardalan08</td>
+      <td>0.454442</td>
+      <td>0.063541</td>
+      <td>1.000000</td>
+      <td>0.688525</td>
+      <td>من بین سال‌های ۱۳۹۸ تا ۱۴۰۲ روی پروژه‌های هوش مصنوعی کار کردم.</td>
+      <td>من بین ساده ازرست نوگه هش تو ازارش هرست دور بیپورج ایوشی ویس لی کاری کرده</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>float16</td>
+      <td>Shayan</td>
+      <td>Shayan08</td>
+      <td>1.446484</td>
+      <td>0.237284</td>
+      <td>1.000000</td>
+      <td>0.688525</td>
+      <td>من بین سال‌های ۱۳۹۸ تا ۱۴۰۲ روی پروژه‌های هوش مصنوعی کار کردم.</td>
+      <td>من بینی سواله زرسی ستنعوه تو هاشته هزر چارسه دوری پورجاه کشمست می کاری چرده</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>fp16</td>
+      <td>Ardalan</td>
+      <td>Ardalan07</td>
+      <td>0.377677</td>
+      <td>0.069940</td>
+      <td>1.000000</td>
+      <td>0.687500</td>
+      <td>جلسه‌ی بعدی ساعت ۹ و ۴۵ دقیقه‌ی صبح برگزار می‌شه.</td>
+      <td>چا رسیبت، ساتن نهو بی سبنج دری رسو بای وزارمشی</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>fp16</td>
+      <td>Ardalan</td>
+      <td>Ardalan07</td>
+      <td>0.353001</td>
+      <td>0.065371</td>
+      <td>1.000000</td>
+      <td>0.687500</td>
+      <td>جلسه‌ی بعدی ساعت ۹ و ۴۵ دقیقه‌ی صبح برگزار می‌شه.</td>
+      <td>چیرازی بیت ساتی نهوگی سپنش دین ریس سوپای گزارمشی</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>float16</td>
+      <td>Ardalan</td>
+      <td>Ardalan07</td>
+      <td>0.214108</td>
+      <td>0.039650</td>
+      <td>1.000000</td>
+      <td>0.687500</td>
+      <td>جلسه‌ی بعدی ساعت ۹ و ۴۵ دقیقه‌ی صبح برگزار می‌شه.</td>
+      <td>چیرسی بیت ساتی نهوگی سپنش دین ریس سپای گزارمشن</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-small</td>
+      <td>fp16</td>
+      <td>Shayan</td>
+      <td>Shayan07</td>
+      <td>0.615934</td>
+      <td>0.135073</td>
+      <td>1.000000</td>
+      <td>0.666667</td>
+      <td>جلسه‌ی بعدی ساعت ۹ و ۴۵ دقیقه‌ی صبح برگزار می‌شه.</td>
+      <td>جلا سی پیادی ساتن نوه چهلو باین دایبه سو پارگوز رمشه</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>float16</td>
+      <td>Ardalan</td>
+      <td>Ardalan07</td>
+      <td>0.767156</td>
+      <td>0.142066</td>
+      <td>1.000000</td>
+      <td>0.666667</td>
+      <td>جلسه‌ی بعدی ساعت ۹ و ۴۵ دقیقه‌ی صبح برگزار می‌شه.</td>
+      <td>چا رسیبت ساطن نهو بسپنج دری رسو بایوزارمشی</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-base</td>
+      <td>int8_float16</td>
+      <td>Ardalan</td>
+      <td>Ardalan07</td>
+      <td>0.149502</td>
+      <td>0.027686</td>
+      <td>1.000000</td>
+      <td>0.666667</td>
+      <td>جلسه‌ی بعدی ساعت ۹ و ۴۵ دقیقه‌ی صبح برگزار می‌شه.</td>
+      <td>شرصی بات ساعته نهوگی سپنش دین ریس سپای گزارمشن</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-small</td>
+      <td>int8_float16</td>
+      <td>Shayan</td>
+      <td>Shayan07</td>
+      <td>0.256548</td>
+      <td>0.056261</td>
+      <td>1.000000</td>
+      <td>0.666667</td>
+      <td>جلسه‌ی بعدی ساعت ۹ و ۴۵ دقیقه‌ی صبح برگزار می‌شه.</td>
+      <td>جلا سی پیادی سوات نوه چهلو باین دایبه سو پارگوز رمشه</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>faster_whisper</td>
+      <td>openai/whisper-tiny</td>
+      <td>float16</td>
+      <td>Ardalan</td>
+      <td>Ardalan16</td>
+      <td>1.538133</td>
+      <td>0.228889</td>
+      <td>1.000000</td>
+      <td>0.652174</td>
+      <td>من با پایتون، PyTorch و ترنسفورمرها کار می‌کنم.</td>
+      <td>عاد بایتون بعد بایتول شراء تنزفون میره کارم کارم</td>
+    </tr>
+    <tr>
+      <td>gpu</td>
+      <td>transformers_whisper</td>
+      <td>openai/whisper-small</td>
+      <td>fp16</td>
+      <td>Ardalan</td>
+      <td>Ardalan07</td>
+      <td>0.595715</td>
+      <td>0.110318</td>
+      <td>1.000000</td>
+      <td>0.645833</td>
+      <td>جلسه‌ی بعدی ساعت ۹ و ۴۵ دقیقه‌ی صبح برگزار می‌شه.</td>
+      <td>چرا سی بت ساعته نهو بیسو پنج دیگه سوپر گوزارم شن.</td>
+    </tr>
+  </tbody>
+</table></body></html>
